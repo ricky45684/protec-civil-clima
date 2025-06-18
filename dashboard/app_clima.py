@@ -156,3 +156,19 @@ st.markdown("""
       🌎 CSN Chile – Sismos
     </a>
   </div>""", unsafe_allow_html=True)
+# -----------------------------------------------------------
+# 📥 Botón de descarga del pronóstico extendido a 5 días (.xlsx)
+# -----------------------------------------------------------
+st.markdown("---")
+st.markdown("### 📥 Pronóstico extendido")
+
+try:
+    with open("dashboard/reportes_clima/pronostico_5_dias.xlsx", "rb") as file:
+        st.download_button(
+            label="Descargar pronóstico 5 días (.xlsx)",
+            data=file,
+            file_name="pronostico_5_dias.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+except FileNotFoundError:
+    st.error("⚠️ Archivo de pronóstico no encontrado. Verificá si fue subido correctamente al repositorio.")
