@@ -14,7 +14,26 @@ DATA_FILE    = os.path.join(BASE_DIR, "..", "data", "Localidades_Santa_Cruz_Coor
 LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
 LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
 
-FONDO        = os.path.join(BASE_DIR, "..", "assets", "fondo", "fondo_proteccion.jpg")
+# FONDO desde URL pública de GitHub
+FONDO = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/fondo/fondo_proteccion.jpg"
+
+# Función para aplicar fondo remoto
+def set_background_url(img_url):
+    st.markdown(f"""
+        <style>
+          .stApp {{
+            background-image: url("{img_url}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+          }}
+        </style>
+    """, unsafe_allow_html=True)
+
+# Aplicar el fondo
+set_background_url(FONDO)
+
 REPORTES_DIR = os.path.join(BASE_DIR, "..", "reportes_clima")
 os.makedirs(REPORTES_DIR, exist_ok=True)
 
