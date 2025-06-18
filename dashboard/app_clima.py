@@ -1,23 +1,11 @@
 import streamlit as st
 import pandas as pd
-import requests
 import os
-import base64
-from fpdf import FPDF
-from datetime import datetime, timezone
 
-# --- CONFIGURACIÓN ---
-API_KEY      = "f003e87edb9944f319d5f706f0979fec"
-BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE    = os.path.join(BASE_DIR, "..", "data", "Localidades_Santa_Cruz_Coordenadas_DD.xlsx")
-# LOGOS desde GitHub (para funcionar en Streamlit Cloud)
-LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
-LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
-
-# FONDO desde URL pública de GitHub
+# URL del fondo desde GitHub
 FONDO = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/fondo/fondo_proteccion.jpg"
 
-# Función para aplicar fondo remoto
+# Función para aplicar fondo
 def set_background_url(img_url):
     st.markdown(f"""
         <style>
@@ -31,38 +19,32 @@ def set_background_url(img_url):
         </style>
     """, unsafe_allow_html=True)
 
-# Aplicar el fondo
+# Aplicar fondo
 set_background_url(FONDO)
 
-REPORTES_DIR = os.path.join(BASE_DIR, "..", "reportes_clima")
-os.makedirs(REPORTES_DIR, exist_ok=True)
+# URLs de los logos desde GitHub
+LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
+LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
 
-# IDs de tus Google My Maps
-MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
-MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
+# Encabezado institucional
+c1, c2, c3 = st.columns([1, 6, 1])
+with c1:
+    st.image(LOGO_PC, width=70)
+with c2:
+    st.markdown("""
+      <h1 style='text-align:center;color:white;font-size:22px;'>
+        Protección Civil y Abordaje Integral de Emergencias y Catástrofes<br>
+        Dirección Provincial de Reducción de Riesgos de Desastres
+      </h1>""", unsafe_allow_html=True)
+with c3:
+    st.image(LOGO_RRD, width=70)
 
-WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+# Cargar archivo de localidades con engine seguro para Streamlit Cloud
+try:
+    localidades = pd.read_excel("dashboard/data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx", engine="openpyxl")
+except Exception as e:
+    st.error(f"No se pudo cargar el archivo de localidades. Detalles: {e}")
 
-def set_background(img_path):
-    try:
-        with open(img_path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode()
-        st.markdown(f"""
-            <style>
-              .stApp {{
-                background-image: url("data:image/jpg;base64,{b64}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-              }}
-            </style>
-        """, unsafe_allow_html=True)
-    except FileNotFoundError:
-        pass
-
-st.set_page_config(page_title="Protección Civil - Clima SC", layout="wide")
-set_background(FONDO)
 
 # Auto-refresh cada 15 minutos
 st.components.v1.html("<script>setTimeout(()=>window.location.reload(),900000);</script>", height=0)
