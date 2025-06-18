@@ -10,8 +10,10 @@ from datetime import datetime, timezone
 API_KEY      = "f003e87edb9944f319d5f706f0979fec"
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE    = os.path.join(BASE_DIR, "..", "data", "Localidades_Santa_Cruz_Coordenadas_DD.xlsx")
-LOGO_PC      = os.path.join(BASE_DIR, "..", "assets", "logos", "LogoPC.png")
-LOGO_RRD     = os.path.join(BASE_DIR, "..", "assets", "logos", "logo_rrd_pc.png")
+# LOGOS desde GitHub (para funcionar en Streamlit Cloud)
+LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
+LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
+
 FONDO        = os.path.join(BASE_DIR, "..", "assets", "fondo", "fondo_proteccion.jpg")
 REPORTES_DIR = os.path.join(BASE_DIR, "..", "reportes_clima")
 os.makedirs(REPORTES_DIR, exist_ok=True)
