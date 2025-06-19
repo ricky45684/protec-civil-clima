@@ -105,6 +105,25 @@ st.markdown("""
        style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🌎 CSN Chile – Sismos</a>
 </div>
 """, unsafe_allow_html=True)
+# --- VISOR WINDY ---
+st.markdown("### 🛰️ Clima (Windy)")
+st.components.v1.iframe(
+    "https://embed.windy.com/embed2.html?lat=-49.5&lon=-70&detailLat=-49.5&detailLon=-70&width=650&height=450&zoom=5"
+    "&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates"
+    "&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarRange=-1",
+    height=460, scrolling=False
+)
+
+# --- VISOR DE MAPAS PROPIOS ---
+MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
+MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
+
+st.markdown("### 🗺️ Mapas de Santa Cruz")
+col1, col2 = st.columns(2)
+with col1:
+    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP1}&ehbc=2E312F", width=640, height=480)
+with col2:
+    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP2}&ehbc=2E312F", width=640, height=480)
 
 # --- CARGA DE LOCALIDADES ---
 try:
