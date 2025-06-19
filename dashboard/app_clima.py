@@ -172,6 +172,19 @@ except Exception as e:
     st.error(f"ERROR al mostrar tabla: {e}")
 
 def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RRD):
+    # Eliminar columnas de presión y nubosidad si existen
+    cols_usar = [col for col in df.columns if col not in ["Presión (hPa)", "Nubosidad (%)"]]
+    df = df[cols_usar].copy()
+    # Modificar columna dirección
+    if "Dirección (°)" in df.columns:
+        df["Dirección"] = df["Dirección (°)"].apply(lambda x: x.split("(")[-1].replace(")", "") if "(" in str(x) else x)
+        df = df.drop("Dirección (°)", axis=1)
+    # Reordenar si es necesario
+    orden = ['Localidad', 'Descripción', 'Temp (°C)', 'Sensación (°C)', 'Viento (km/h)', 'Ráfagas (km/h)', 'Dirección', 'Humedad (%)']
+    df = df[[col for col in orden if col in df.columns]]
+    # Anchuras de columna ajustadas para ocupar todo el ancho A4 horizontal (L)
+    col_widths = [48, 48, 26, 30, 30, 30, 30, 24]
+
     pdf = FPDF(orientation='L', unit='mm', format='A4')
     pdf.add_page()
     try:
@@ -185,13 +198,22 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
     pdf.set_font("Arial", '', 11)
     pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
     pdf.ln(2)
+
     pdf.set_font("Arial", 'B', 10)
-    col_widths = [36, 36, 18, 22, 22, 22, 27, 18, 22, 24]
-    for ix, col in enumerate(df.columns):
-        pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
-    pdf.ln()
+    # ENCABEZADO DE COLUMNA (también lo vamos a repetir)
+    def tabla_header():
+        for ix, col in enumerate(df.columns):
+            pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
+        pdf.ln()
+
+    tabla_header()
     pdf.set_font("Arial", '', 10)
+    rows_por_pagina = 20  # Ajustalo si querés más/menos filas por hoja
     for idx, row in df.iterrows():
+        if idx > 0 and idx % rows_por_pagina == 0:
+            pdf.add_page()
+            tabla_header()
+            pdf.set_font("Arial", '', 10)
         for ix, col in enumerate(df.columns):
             txt = str(row[col]) if row[col] is not None else ""
             txt = limpiar_texto_pdf(txt)
@@ -205,6 +227,7 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
         "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
     ), 0, 'C')
     return pdf
+
 
 if st.button("Generar parte diario PDF"):
     pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
