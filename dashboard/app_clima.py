@@ -165,6 +165,14 @@ def get_clima(lat, lon):
         }
 
 # --- CARGA DE LOCALIDADES ---
+try:
+    df_parte_viz = df_parte[[c[0] for c in columnas]]
+    df_parte_viz.columns = [c[1] for c in columnas]
+    df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
+        lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
+    st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
+except Exception as e:
+    st.error(f"ERROR al mostrar tabla: {e}")
 if st.button("Generar parte diario PDF"):
     pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
     pdf_bytes = pdf.output(dest='S').encode('latin1')
