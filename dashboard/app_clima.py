@@ -190,6 +190,28 @@ for i, row in df.iterrows():
           <p style='color:#fff'>Dirección: {c['deg']}° ({dir_cardinal(c['deg'])})</p>
           <p style='color:#fff'>Humedad: {c['hum']}% | Presión: {c['pres']} hPa | Nubosidad: {c['cloud']}%</p>
         </div>""", unsafe_allow_html=True)
+def generar_parte_pdf(df, now_local_str, now_utc_str):
+    pdf = FPDF(orientation='L', unit='mm', format='A4')
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.set_text_color(255, 165, 0)
+    pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
+    pdf.set_font("Arial", '', 11)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, f"Generado automáticamente (UTC {now_utc_str} / Local {now_local_str})", 0, 1, 'C')
+    pdf.ln(4)
+    pdf.set_font("Arial", 'B', 10)
+    # Encabezados
+    for col in df.columns:
+        pdf.cell(30, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
+    pdf.ln()
+    pdf.set_font("Arial", '', 10)
+    # Filas
+    for _, row in df.iterrows():
+        for val in row:
+            pdf.cell(30, 10, limpiar_texto_pdf(str(val)), 1, 0, 'C')
+        pdf.ln()
+    return pdf
 
 # --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
 st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
