@@ -12,23 +12,23 @@ import base64
 
 def set_bg_from_local(img_path):
     with open(img_path, "rb") as image_file:
-        img_bytes = image_file.read()
-    encoded = base64.b64encode(img_bytes).decode()
+        encoded_string = base64.b64encode(image_file.read())
     st.markdown(
         f"""
         <style>
         .stApp {{
-            background-image: url("data:image/jpg;base64,{encoded}");
+            background-image: url('data:image/jpg;base64,{encoded_string.decode()}');
             background-size: cover;
-            background-repeat: no-repeat;
+            background-position: center;
             background-attachment: fixed;
         }}
         </style>
         """,
         unsafe_allow_html=True
     )
+# Llamá a la función al principio del script
 
-set_bg_from_local("assets/fondo/fondo_proteccion.jpg")
+set_bg_from_local("dashboard/assets/fondo/fondo_proteccion.jpg")
 
 # --- CONFIGURACIÓN ---
 API_KEY = "f003e87edb9944f319d5f706f0979fec"
