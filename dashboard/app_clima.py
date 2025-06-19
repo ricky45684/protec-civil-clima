@@ -4,11 +4,9 @@ import requests
 import os
 from datetime import datetime, timezone, timedelta
 from fpdf import FPDF
-import tempfile
-from io import BytesIO
 import pytz
 import numpy as np
-import html
+from io import BytesIO
 
 # --- CONFIGURACIÓN ---
 API_KEY = "f003e87edb9944f319d5f706f0979fec"
@@ -17,8 +15,6 @@ DATA_FILE = "dashboard/data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx"
 LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
 LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
 
-MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
-MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
 WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
 # --- HORA LOCAL Y UTC ---
@@ -37,14 +33,14 @@ st.markdown(
 
 # --- FUNCIONES AUXILIARES ---
 def limpiar_texto_pdf(txt):
-    if not isinstance(txt, str):
-        txt = str(txt)
+    txt = str(txt)
     txt = (txt.replace('á', 'a').replace('é', 'e').replace('í', 'i')
             .replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
             .replace('Á', 'A').replace('É', 'E').replace('Í', 'I')
             .replace('Ó', 'O').replace('Ú', 'U').replace('Ñ', 'N'))
     txt = txt.replace('°', 'o')
     txt = txt.replace('’','\'')
+    txt = txt.replace('\n', ' ').replace('\r', '')
     txt = txt.encode("ascii", errors="ignore").decode()
     return txt
 
@@ -88,34 +84,27 @@ with c1:
 with c2:
     st.markdown("""
       <h1 style='text-align:center;color:white;font-size:22px;'>
-        Protección Civil y Abordaje Integral de Emergencias y Catástrofes<br>
-        Dirección Provincial de Reducción de Riesgos de Desastres
+        PROTECCIÓN CIVIL Y ABORDAJE INTEGRAL DE EMERGENCIAS Y CATÁSTROFES<br>
+        DIRECCIÓN PROVINCIAL DE REDUCCIÓN DE RIESGOS DE DESASTRES
       </h1>""", unsafe_allow_html=True)
 with c3:
     st.image(LOGO_RRD, width=70)
 
+# --- BOTONES DE ACCESO RÁPIDO ---
 st.markdown("""
-  <div style='text-align:center;margin:10px;'>
+<div style='text-align:center;margin:10px;'>
     <a href='https://www.smn.gob.ar/alertas' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;
-              padding:10px 20px;border-radius:5px;text-decoration:none;
-              font-weight:bold;'>🔔 Ver alertas del SMN</a>
-  </div>""", unsafe_allow_html=True)
-
-st.markdown("### 🛰️ Clima")
-st.components.v1.iframe(
-    "https://embed.windy.com/embed2.html?lat=-49.5&lon=-70&detailLat=-49.5&detailLon=-70&width=650&height=450&zoom=5"
-    "&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates"
-    "&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarRange=-1",
-    height=460, scrolling=False
-)
-
-st.markdown("### 🗺️ Mapa Santa Cruz")
-col1, col2 = st.columns(2)
-with col1:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP1}&ehbc=2E312F", width=640, height=480)
-with col2:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP2}&ehbc=2E312F", width=640, height=480)
+       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;'>🔔 Ver alertas del SMN</a>
+    <a href='https://www.argentina.gob.ar/transporte/vialidad-nacional/estado-de-rutas' target='_blank'
+       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🛣️ Partes Nacionales Vialidad</a>
+    <a href='https://www.dpvsc.gov.ar/index.php/rutas-2/estado-de-rutas/' target='_blank'
+       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🛣️ Partes Provinciales Vialidad</a>
+    <a href='https://www.inpres.gob.ar/desktop/index.php' target='_blank'
+       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🌎 INPRES – Sismos</a>
+    <a href='https://www.csn.uchile.cl/' target='_blank'
+       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🌎 CSN Chile – Sismos</a>
+</div>
+""", unsafe_allow_html=True)
 
 # --- CARGA DE LOCALIDADES ---
 try:
@@ -128,12 +117,10 @@ except Exception as e:
 st.markdown("### 🌡️ Clima actual por localidad")
 cols = st.columns(2)
 datos = []
-max_wind = 0
 for i, row in df.iterrows():
     c = get_clima(row["Latitud_DD"], row["Longitud_DD"])
     c["loc"] = row["localidad"]
     datos.append(c)
-    max_wind = max(max_wind, c["wind"] if isinstance(c["wind"], (int, float)) else 0)
     with cols[i%2]:
         st.markdown(f"""
         <div style='background:rgba(0,0,0,0.6);padding:12px;border-radius:8px;margin-bottom:8px;'>
@@ -148,7 +135,6 @@ for i, row in df.iterrows():
 
 # --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
 st.markdown("### 📝 Parte diario del clima (todas las localidades)")
-
 df_parte = pd.DataFrame(datos)
 columnas = [
     ("loc", "Localidad"),
@@ -166,23 +152,19 @@ try:
     df_parte_viz = df_parte[[c[0] for c in columnas]]
     df_parte_viz.columns = [c[1] for c in columnas]
     df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
-        lambda x: f"{x}° ({dir_cardinal(x)})" if x != "-" else "-")
+        lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
     st.dataframe(df_parte_viz, use_container_width=True)
 except Exception as e:
     st.error(f"ERROR al mostrar tabla: {e}")
 
 def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RRD):
-    # Eliminar columnas de presión y nubosidad si existen
     cols_usar = [col for col in df.columns if col not in ["Presión (hPa)", "Nubosidad (%)"]]
     df = df[cols_usar].copy()
-    # Modificar columna dirección
     if "Dirección (°)" in df.columns:
-        df["Dirección"] = df["Dirección (°)"].apply(lambda x: x.split("(")[-1].replace(")", "") if "(" in str(x) else x)
+        df["Dirección"] = df["Dirección (°)"].apply(lambda x: x)
         df = df.drop("Dirección (°)", axis=1)
-    # Reordenar si es necesario
     orden = ['Localidad', 'Descripción', 'Temp (°C)', 'Sensación (°C)', 'Viento (km/h)', 'Ráfagas (km/h)', 'Dirección', 'Humedad (%)']
     df = df[[col for col in orden if col in df.columns]]
-    # Anchuras de columna ajustadas para ocupar todo el ancho A4 horizontal (L)
     col_widths = [48, 48, 26, 30, 30, 30, 30, 24]
 
     pdf = FPDF(orientation='L', unit='mm', format='A4')
@@ -194,13 +176,12 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
         pass
     pdf.set_xy(0, 20)
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 18, "Clima Actual por Localidad - SC", 0, 1, "C")
+    pdf.cell(0, 18, "CLIMA ACTUAL POR LOCALIDAD - PROTECCION CIVIL", 0, 1, "C")
     pdf.set_font("Arial", '', 11)
     pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
     pdf.ln(2)
 
     pdf.set_font("Arial", 'B', 10)
-    # ENCABEZADO DE COLUMNA (también lo vamos a repetir)
     def tabla_header():
         for ix, col in enumerate(df.columns):
             pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
@@ -208,10 +189,11 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
 
     tabla_header()
     pdf.set_font("Arial", '', 10)
-    rows_por_pagina = 20  # Ajustalo si querés más/menos filas por hoja
+    rows_por_pagina = 20
     for idx, row in df.iterrows():
         if idx > 0 and idx % rows_por_pagina == 0:
             pdf.add_page()
+            pdf.set_xy(0, 20)
             tabla_header()
             pdf.set_font("Arial", '', 10)
         for ix, col in enumerate(df.columns):
@@ -228,18 +210,15 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
     ), 0, 'C')
     return pdf
 
-
 if st.button("Generar parte diario PDF"):
     pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        pdf.output(tmp.name)
-        tmp.seek(0)
-        st.download_button(
-            label="Descargar parte diario PDF",
-            data=tmp.read(),
-            file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
-            mime="application/pdf"
-        )
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    st.download_button(
+        label="Descargar parte diario PDF",
+        data=pdf_bytes,
+        file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
+        mime="application/pdf"
+    )
 
 # --- PRONÓSTICO EXTENDIDO POR LOCALIDAD (VISUAL Y PDF) ---
 st.markdown("### 📅 Pronóstico extendido 5 días por localidad")
@@ -309,7 +288,7 @@ for fecha, v in list(pronostico_diario.items())[:5]:
     vientos.append(round(sum(v["Viento"])/len(v["Viento"]),1))
     rafagas.append(round(max(v["Ráfagas"]),1))
     dir_prom = int(sum(v["Dir_viento"])/len(v["Dir_viento"]))
-    dirs.append(f"{dir_prom}° ({cardinal(dir_prom)})")
+    dirs.append(f"{dir_cardinal(dir_prom)}")
     precips.append(f"{round(max(v['Precip']))}%")
 
 def icon_url(code): return f"http://openweathermap.org/img/wn/{code}@2x.png"
@@ -344,7 +323,7 @@ with col2:
     html_txt += "</tr></table>"
     st.markdown(html_txt, unsafe_allow_html=True)
 
-# --- BLOQUE PDF CORREGIDO ---
+# --- PDF Pronóstico extendido ---
 class PronosticoPDF(FPDF):
     def header(self):
         try:
@@ -362,45 +341,87 @@ class PronosticoPDF(FPDF):
         self.cell(0, 8, limpiar_texto_pdf("Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"), 0, 0, 'C')
 
 if st.button("Descargar pronóstico 5 días en PDF"):
-    pdf = PronosticoPDF('L', 'mm', 'A4')
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(45, 10, limpiar_texto_pdf(""), 1, 0, "C")
-    for d in dias:
-        pdf.cell(40, 10, limpiar_texto_pdf(d), 1, 0, "C")
-    pdf.ln()
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(45, 10, limpiar_texto_pdf("Estado"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(descripciones[i]), 1, 0, "C")
-    pdf.ln()
-    pdf.cell(45, 10, limpiar_texto_pdf("Temp max/min (C)"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(f"{temp_maxs[i]} / {temp_mins[i]}"), 1, 0, "C")
-    pdf.ln()
-    pdf.cell(45, 10, limpiar_texto_pdf("Viento (km/h)"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(f"{vientos[i]}"), 1, 0, "C")
-    pdf.ln()
-    pdf.cell(45, 10, limpiar_texto_pdf("Rafagas (km/h)"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(f"{rafagas[i]}"), 1, 0, "C")
-    pdf.ln()
-    pdf.cell(45, 10, limpiar_texto_pdf("Direccion"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(dirs[i]), 1, 0, "C")
-    pdf.ln()
-    pdf.cell(45, 10, limpiar_texto_pdf("Prob. Precip (%)"), 1)
-    for i in range(5):
-        pdf.cell(40, 10, limpiar_texto_pdf(f"{precips[i]}"), 1, 0, "C")
-    pdf.ln()
-    tmp_pdf = BytesIO()
-    pdf.output(tmp_pdf)
-    st.download_button(
-        label="Descargar PDF",
-        data=tmp_pdf.getvalue(),
-        file_name=f"Pronostico5dias_{localidad_sel.replace(' ','_')}.pdf",
-        mime="application/pdf"
-    )
+    # Asegura que cada lista tenga 5 elementos siempre
+    def completar(lst, relleno="-"):
+        lst = list(lst)
+        while len(lst) < 5:
+            lst.append(relleno)
+        return lst[:5]
 
-# --- SEMÁFORO MULTICRITERIO POR DEPARTAMENTO Y TABLA DE SISMOS (pegá aquí el bloque actual de tu script, no es necesario modificarlo para unicode) ---
+    dias_corr = completar(dias, "-")
+    descripciones_corr = completar(descripciones, "-")
+    temp_maxs_corr = completar(temp_maxs, "-")
+    temp_mins_corr = completar(temp_mins, "-")
+    vientos_corr = completar(vientos, "-")
+    rafagas_corr = completar(rafagas, "-")
+    dirs_corr = completar(dirs, "-")
+    precips_corr = completar(precips, "-")
+
+    try:
+        pdf = PronosticoPDF('L', 'mm', 'A4')
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(45, 10, limpiar_texto_pdf(""), 1, 0, "C")
+        for d in dias_corr:
+            pdf.cell(40, 10, limpiar_texto_pdf(d), 1, 0, "C")
+        pdf.ln()
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(45, 10, limpiar_texto_pdf("Estado"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(descripciones_corr[i]), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Temp max/min (C)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{temp_maxs_corr[i]} / {temp_mins_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Viento (km/h)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{vientos_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Rafagas (km/h)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{rafagas_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Direccion"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(dirs_corr[i]), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Prob. Precip (%)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{precips_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        st.download_button(
+            label="Descargar PDF",
+            data=pdf_bytes,
+            file_name=f"Pronostico5dias_{localidad_sel.replace(' ','_')}.pdf",
+            mime="application/pdf"
+        )
+    except Exception as err:
+        st.error(f"No se pudo generar el PDF. Error: {err}")
+
+# --- SISMOS GLOBALES (USGS) ---
+st.markdown("### 🌍 Últimos sismos globales (USGS)")
+
+try:
+    r = requests.get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson", timeout=10)
+    features = r.json()["features"][:10]
+    data = []
+    for f in features:
+        props = f["properties"]
+        coords = f["geometry"]["coordinates"]
+        time_str = datetime.utcfromtimestamp(props["time"]/1000).strftime('%d/%m %H:%M')
+        mag = props.get("mag","-")
+        place = props.get("place","-")
+        url = props.get("url","#")
+        depth = coords[2] if len(coords) > 2 else "-"
+        data.append([time_str, mag, place, depth, url])
+    df_eq = pd.DataFrame(data, columns=["Fecha/hora UTC", "Magnitud", "Lugar", "Profundidad (km)", "Ver evento"])
+    def make_clickable(val):
+        return f'<a href="{val}" target="_blank">🔗 Link</a>' if val.startswith("http") else "-"
+    df_eq["Ver evento"] = df_eq["Ver evento"].apply(make_clickable)
+    st.write(df_eq.to_html(escape=False, index=False), unsafe_allow_html=True)
+except Exception as e:
+    st.warning("No se pudo cargar la lista de sismos globales.")
+
+# --- FIN DEL SCRIPT ---
