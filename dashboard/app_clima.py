@@ -486,8 +486,6 @@ for i, row in alertas_df.iterrows():
         unsafe_allow_html=True,
     )
 
----
-
 st.markdown("## 🌎 Últimos 10 sismos globales (USGS)")
 import requests
 
