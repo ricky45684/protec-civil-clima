@@ -7,6 +7,28 @@ from fpdf import FPDF
 import pytz
 import numpy as np
 from io import BytesIO
+import streamlit as st
+import base64
+
+def set_bg_from_local(img_path):
+    with open(img_path, "rb") as image_file:
+        img_bytes = image_file.read()
+    encoded = base64.b64encode(img_bytes).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{encoded}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+set_bg_from_local("assets/fondo/fondo_proteccion.jpg")
 
 # --- CONFIGURACIÓN ---
 API_KEY = "f003e87edb9944f319d5f706f0979fec"
@@ -87,17 +109,17 @@ with c3:
 
 # --- BOTONES DE ACCESO RÁPIDO ---
 st.markdown(f"""
-<div style='text-align:center;margin:10px;'>
+<div style='display:flex;flex-wrap:wrap;justify-content:center;margin:10px;gap:7px;'>
     <a href='https://www.smn.gob.ar/alertas' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🔔 Alertas SMN</a>
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🔔 Alertas SMN</a>
     <a href='https://www.argentina.gob.ar/transporte/vialidad-nacional/estado-de-rutas' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🛣️ Vialidad Nacional</a>
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🛣️ Vialidad Nacional</a>
     <a href='https://www.dpvsc.gov.ar/index.php/rutas-2/estado-de-rutas/' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🛣️ Vialidad Provincial</a>
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🛣️ Vialidad Provincial</a>
     <a href='https://www.inpres.gob.ar/desktop/index.php' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🌎 INPRES – Sismos</a>
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🌎 INPRES – Sismos</a>
     <a href='https://www.csn.uchile.cl/' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🌎 CSN Chile</a>
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🌎 CSN Chile</a>
 </div>
 """, unsafe_allow_html=True)
 
@@ -192,28 +214,45 @@ for i, row in df.iterrows():
         </div>""", unsafe_allow_html=True)
 def generar_parte_pdf(df, now_local_str, now_utc_str):
     pdf = FPDF(orientation='L', unit='mm', format='A4')
-    pdf.add_page()
     pdf.set_left_margin(12)
     pdf.set_right_margin(12)
-    pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(255, 165, 0)
-    pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
-    pdf.set_font("Arial", '', 11)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, f"Generado automáticamente (UTC {now_utc_str} / Local {now_local_str})", 0, 1, 'C')
-    pdf.ln(4)
-    pdf.set_font("Arial", 'B', 10)
-    # Encabezados
-    for col in df.columns:
-        pdf.cell(28, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
-    pdf.ln()
-    pdf.set_font("Arial", '', 10)
-    # Filas
-    for _, row in df.iterrows():
-        for val in row:
-            pdf.cell(28, 10, limpiar_texto_pdf(str(val)), 1, 0, 'C')
+    filas_por_pagina = 20
+
+    def encabezado():
+        pdf.set_font("Arial", 'B', 16)
+        pdf.set_text_color(255, 165, 0)
+        pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
+        pdf.set_font("Arial", '', 11)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(0, 10, f"Generado automáticamente (UTC {now_utc_str} / Local {now_local_str})", 0, 1, 'C')
+        pdf.ln(4)
+        pdf.set_font("Arial", 'B', 10)
+        for col in df.columns:
+            pdf.cell(28, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
         pdf.ln()
+        pdf.set_font("Arial", '', 10)
+
+    for i, (_, row) in enumerate(df.iterrows()):
+        if i % filas_por_pagina == 0:
+            pdf.add_page()
+            encabezado()
+        for val in row:
+            nombre = limpiar_texto_pdf(str(val))
+            # Si es la columna de localidad y es muy larga, achica fuente
+            if df.columns.get_loc("Localidad") == row.index.get_loc(val) and len(nombre) > 20:
+                pdf.set_font("Arial", '', 8)
+                pdf.cell(28, 10, nombre, 1, 0, 'C')
+                pdf.set_font("Arial", '', 10)
+            else:
+                pdf.cell(28, 10, nombre, 1, 0, 'C')
+        pdf.ln()
+    pdf.ln(2)
+    pdf.set_font("Arial", 'I', 9)
+    pdf.multi_cell(0, 8, limpiar_texto_pdf(
+        "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
+    ), 0, 'C')
     return pdf
+
 # --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
 st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
 df_parte = pd.DataFrame(datos)
