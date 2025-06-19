@@ -165,6 +165,16 @@ def get_clima(lat, lon):
         }
 
 # --- CARGA DE LOCALIDADES ---
+if st.button("Generar parte diario PDF"):
+    pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    st.download_button(
+        label="Descargar parte diario PDF",
+        data=pdf_bytes,
+        file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
+        mime="application/pdf"
+    )
+
 try:
     df = pd.read_excel(DATA_FILE, engine="openpyxl")
 except Exception as e:
@@ -384,6 +394,64 @@ class PronosticoPDF(FPDF):
         self.set_y(-12)
         self.set_font('Arial', 'I', 9)
         self.cell(0, 8, limpiar_texto_pdf("Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"), 0, 0, 'C')
+if st.button("Descargar pronóstico 5 días en PDF"):
+    def completar(lst, relleno="-"):
+        lst = list(lst)
+        while len(lst) < 5:
+            lst.append(relleno)
+        return lst[:5]
+    dias_corr = completar(dias, "-")
+    descripciones_corr = completar(descripciones, "-")
+    temp_maxs_corr = completar(temp_maxs, "-")
+    temp_mins_corr = completar(temp_mins, "-")
+    vientos_corr = completar(vientos, "-")
+    rafagas_corr = completar(rafagas, "-")
+    dirs_corr = completar(dirs, "-")
+    precips_corr = completar(precips, "-")
+    try:
+        pdf = PronosticoPDF('L', 'mm', 'A4')
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.set_text_color(255, 165, 0)
+        pdf.cell(45, 10, limpiar_texto_pdf(""), 1, 0, "C")
+        for d in dias_corr:
+            pdf.cell(40, 10, limpiar_texto_pdf(d), 1, 0, "C")
+        pdf.set_text_color(0,0,0)
+        pdf.ln()
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(45, 10, limpiar_texto_pdf("Estado"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(descripciones_corr[i]), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Temp max/min (C)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{temp_maxs_corr[i]} / {temp_mins_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Viento (km/h)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{vientos_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Rafagas (km/h)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{rafagas_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Direccion"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(dirs_corr[i]), 1, 0, "C")
+        pdf.ln()
+        pdf.cell(45, 10, limpiar_texto_pdf("Prob. Precip (%)"), 1)
+        for i in range(5):
+            pdf.cell(40, 10, limpiar_texto_pdf(f"{precips_corr[i]}"), 1, 0, "C")
+        pdf.ln()
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        st.download_button(
+            label="Descargar PDF",
+            data=pdf_bytes,
+            file_name=f"Pronostico5dias_{localidad_sel.replace(' ','_')}.pdf",
+            mime="application/pdf"
+        )
+    except Exception as err:
+        st.error(f"No se pudo generar el PDF. Error: {err}")
 
 # --- SEMÁFORO MULTICRITERIO POR DEPARTAMENTO (con explicación) ---
 st.markdown(f"### <span style='color:{ORANGE}'>🚦 Semáforo meteorológico por departamento</span>", unsafe_allow_html=True)
