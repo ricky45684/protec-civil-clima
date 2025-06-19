@@ -226,36 +226,31 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
     col_widths = [48, 48, 26, 30, 30, 30, 30, 24]
 
     pdf = FPDF(orientation='L', unit='mm', format='A4')
-    pdf.add_page()
-    try:
-        pdf.image(logo_izq, 30, 10, 24)  # Movido más a la derecha
-        pdf.image(logo_der, 265, 10, 24)
-    except Exception:
-        pass
-    pdf.set_xy(0, 20)
-    pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(255, 165, 0)
-    pdf.cell(0, 18, "CLIMA ACTUAL POR LOCALIDAD - PROTECCION CIVIL", 0, 1, "C")
-    pdf.set_text_color(0,0,0)
-    pdf.set_font("Arial", '', 11)
-    pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
-    pdf.ln(2)
-
-    pdf.set_font("Arial", 'B', 10)
     def tabla_header():
         pdf.set_text_color(255, 165, 0)
+        pdf.set_font("Arial", 'B', 10)
         for ix, col in enumerate(df.columns):
             pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
-        pdf.set_text_color(0,0,0)
         pdf.ln()
+        pdf.set_text_color(0,0,0)
 
-    tabla_header()
-    pdf.set_font("Arial", '', 10)
-    rows_por_pagina = 20
+    filas_por_pagina = 20
     for idx, row in df.iterrows():
-        if idx > 0 and idx % rows_por_pagina == 0:
+        if idx % filas_por_pagina == 0:
             pdf.add_page()
-            pdf.set_xy(0, 20)
+            pdf.set_y(30)  # Encabezado más arriba
+            try:
+                pdf.image(logo_izq, 20, 10, 18)
+                pdf.image(logo_der, 250, 10, 18)
+            except Exception:
+                pass
+            pdf.set_font("Arial", 'B', 16)
+            pdf.set_text_color(255, 165, 0)
+            pdf.cell(0, 12, "CLIMA ACTUAL POR LOCALIDAD - PROTECCION CIVIL", 0, 1, "C")
+            pdf.set_text_color(0,0,0)
+            pdf.set_font("Arial", '', 11)
+            pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
+            pdf.ln(2)
             tabla_header()
             pdf.set_font("Arial", '', 10)
         for ix, col in enumerate(df.columns):
@@ -273,15 +268,6 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
     ), 0, 'C')
     return pdf
 
-if st.button("Generar parte diario PDF"):
-    pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    st.download_button(
-        label="Descargar parte diario PDF",
-        data=pdf_bytes,
-        file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
-        mime="application/pdf"
-    )
 
 # --- PRONÓSTICO EXTENDIDO POR LOCALIDAD (VISUAL Y PDF) ---
 st.markdown(f"### <span style='color:{ORANGE}'>📅 Pronóstico extendido 5 días por localidad</span>", unsafe_allow_html=True)
@@ -384,106 +370,53 @@ with col2:
 class PronosticoPDF(FPDF):
     def header(self):
         try:
-            self.image(LOGO_PC, 40, 8, 18) # Escudo a la derecha
-            self.image(LOGO_RRD, 180, 8, 18)
+            self.image(LOGO_PC, 20, 8, 16)
+            self.image(LOGO_RRD, 250, 8, 16)
         except: pass
-        self.set_font('Arial', 'B', 14)
+        self.set_font('Arial', 'B', 15)
         self.set_text_color(255,165,0)
-        self.cell(0, 10, limpiar_texto_pdf(f'Pronostico extendido 5 dias – {localidad_sel}, Santa Cruz'), 0, 1, 'C')
+        self.cell(0, 13, limpiar_texto_pdf(f'Pronostico extendido 5 dias  {localidad_sel} Santa Cruz'), 0, 1, 'C')
         self.set_text_color(0,0,0)
         self.set_font('Arial', '', 11)
         self.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc_str} / Local {now_local_str})"), 0, 1, "C")
-        self.ln(3)
+        self.ln(2)
     def footer(self):
         self.set_y(-12)
         self.set_font('Arial', 'I', 9)
         self.cell(0, 8, limpiar_texto_pdf("Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"), 0, 0, 'C')
 
-if st.button("Descargar pronóstico 5 días en PDF"):
-    def completar(lst, relleno="-"):
-        lst = list(lst)
-        while len(lst) < 5:
-            lst.append(relleno)
-        return lst[:5]
-    dias_corr = completar(dias, "-")
-    descripciones_corr = completar(descripciones, "-")
-    temp_maxs_corr = completar(temp_maxs, "-")
-    temp_mins_corr = completar(temp_mins, "-")
-    vientos_corr = completar(vientos, "-")
-    rafagas_corr = completar(rafagas, "-")
-    dirs_corr = completar(dirs, "-")
-    precips_corr = completar(precips, "-")
-    try:
-        pdf = PronosticoPDF('L', 'mm', 'A4')
-        pdf.add_page()
-        pdf.set_font('Arial', 'B', 10)
-        pdf.set_text_color(255, 165, 0)
-        pdf.cell(45, 10, limpiar_texto_pdf(""), 1, 0, "C")
-        for d in dias_corr:
-            pdf.cell(40, 10, limpiar_texto_pdf(d), 1, 0, "C")
-        pdf.set_text_color(0,0,0)
-        pdf.ln()
-        pdf.set_font('Arial', '', 10)
-        pdf.cell(45, 10, limpiar_texto_pdf("Estado"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(descripciones_corr[i]), 1, 0, "C")
-        pdf.ln()
-        pdf.cell(45, 10, limpiar_texto_pdf("Temp max/min (C)"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(f"{temp_maxs_corr[i]} / {temp_mins_corr[i]}"), 1, 0, "C")
-        pdf.ln()
-        pdf.cell(45, 10, limpiar_texto_pdf("Viento (km/h)"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(f"{vientos_corr[i]}"), 1, 0, "C")
-        pdf.ln()
-        pdf.cell(45, 10, limpiar_texto_pdf("Rafagas (km/h)"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(f"{rafagas_corr[i]}"), 1, 0, "C")
-        pdf.ln()
-        pdf.cell(45, 10, limpiar_texto_pdf("Direccion"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(dirs_corr[i]), 1, 0, "C")
-        pdf.ln()
-        pdf.cell(45, 10, limpiar_texto_pdf("Prob. Precip (%)"), 1)
-        for i in range(5):
-            pdf.cell(40, 10, limpiar_texto_pdf(f"{precips_corr[i]}"), 1, 0, "C")
-        pdf.ln()
-        pdf_bytes = pdf.output(dest='S').encode('latin1')
-        st.download_button(
-            label="Descargar PDF",
-            data=pdf_bytes,
-            file_name=f"Pronostico5dias_{localidad_sel.replace(' ','_')}.pdf",
-            mime="application/pdf"
-        )
-    except Exception as err:
-        st.error(f"No se pudo generar el PDF. Error: {err}")
-
-# --- SEMÁFORO MULTICRITERIO POR DEPARTAMENTO ---
+# --- SEMÁFORO MULTICRITERIO POR DEPARTAMENTO (con explicación) ---
 st.markdown(f"### <span style='color:{ORANGE}'>🚦 Semáforo meteorológico por departamento</span>", unsafe_allow_html=True)
 deptos = [
     "Guer Aike", "Corpen Aike", "Magallanes", "Deseado",
     "Lago Buenos Aires", "Rio Chico", "Lago Argentino"
 ]
-# Simulamos datos para cada departamento (usá tus propios criterios de riesgo reales)
 estado_deptos = {
-    "Guer Aike": "🟢 Normal",
-    "Corpen Aike": "🟡 Precaución",
-    "Magallanes": "🟢 Normal",
-    "Deseado": "🔴 Riesgo",
-    "Lago Buenos Aires": "🟢 Normal",
-    "Rio Chico": "🟡 Precaución",
-    "Lago Argentino": "🟢 Normal"
+    "Guer Aike": ("🟢 Normal", ""),
+    "Corpen Aike": ("🟡 Precaución", "Precaución: Vientos fuertes <span style='font-size:1.3em;'>💨</span>"),
+    "Magallanes": ("🟢 Normal", ""),
+    "Deseado": ("🔴 Riesgo", "Riesgo: Posible inundación <span style='font-size:1.3em;'>🌊</span>"),
+    "Lago Buenos Aires": ("🟢 Normal", ""),
+    "Rio Chico": ("🟡 Precaución", "Precaución: Nevadas intensas <span style='font-size:1.3em;'>❄️</span>"),
+    "Lago Argentino": ("🟢 Normal", ""),
 }
 colA, colB = st.columns(2)
 for i, dep in enumerate(deptos):
+    estado, causa = estado_deptos.get(dep, ("-", ""))
     card = f"""<div class="semaforo-card">
-        <div class="semaforo-card-title" style="color:{ORANGE};font-weight:bold;font-size:1.14em;">{dep}</div>
-        <div class="semaforo-depto">{estado_deptos.get(dep,"-")}</div>
-    </div>"""
+        <div class="semaforo-card-title" style="color:{ORANGE};font-weight:bold;font-size:1.15em;">{dep}</div>
+        <div class="semaforo-depto">{estado}</div>"""
+    # Si hay causa, la agrego
+    if "Precaución" in estado:
+        card += f"""<div style="margin-top:7px;color:{ORANGE};font-weight:bold;">{causa}</div>"""
+    elif "Riesgo" in estado:
+        card += f"""<div style="margin-top:7px;color:#FF3B3B;font-weight:bold;">{causa}</div>"""
+    card += "</div>"
     if i < 4:
         colA.markdown(card, unsafe_allow_html=True)
     else:
         colB.markdown(card, unsafe_allow_html=True)
+
 
 # --- SISMOS GLOBALES (USGS) ---
 st.markdown(f"### <span style='color:{ORANGE}'>🌍 Últimos sismos globales (USGS)</span>", unsafe_allow_html=True)
