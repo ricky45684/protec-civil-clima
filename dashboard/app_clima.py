@@ -193,6 +193,8 @@ for i, row in df.iterrows():
 def generar_parte_pdf(df, now_local_str, now_utc_str):
     pdf = FPDF(orientation='L', unit='mm', format='A4')
     pdf.add_page()
+    pdf.set_left_margin(12)
+    pdf.set_right_margin(12)
     pdf.set_font("Arial", 'B', 16)
     pdf.set_text_color(255, 165, 0)
     pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
@@ -203,16 +205,15 @@ def generar_parte_pdf(df, now_local_str, now_utc_str):
     pdf.set_font("Arial", 'B', 10)
     # Encabezados
     for col in df.columns:
-        pdf.cell(30, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
+        pdf.cell(28, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
     pdf.ln()
     pdf.set_font("Arial", '', 10)
     # Filas
     for _, row in df.iterrows():
         for val in row:
-            pdf.cell(30, 10, limpiar_texto_pdf(str(val)), 1, 0, 'C')
+            pdf.cell(28, 10, limpiar_texto_pdf(str(val)), 1, 0, 'C')
         pdf.ln()
     return pdf
-
 # --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
 st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
 df_parte = pd.DataFrame(datos)
