@@ -17,6 +17,8 @@ LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main
 
 WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
+ORANGE = "#FFA500"
+
 # --- HORA LOCAL Y UTC ---
 BA = pytz.timezone("America/Argentina/Buenos_Aires")
 now_utc = datetime.now(timezone.utc)
@@ -30,6 +32,91 @@ st.markdown(
     f"<p style='text-align:right;color:lightgray;'>Última actualización: {now_local_str} (UTC {now_utc_str})</p>",
     unsafe_allow_html=True
 )
+
+# --- ESTILO CUSTOM ---
+st.markdown(f"""
+    <style>
+        html, body, [class*="st-"] {{
+            background-color: #141618;
+        }}
+        .orange-title, .orange-button {{
+            color: {ORANGE} !important;
+        }}
+        .stButton>button, .orange-button, .semaforo-card-title {{
+            background-color: {ORANGE} !important;
+            color: #fff !important;
+            font-weight: bold;
+        }}
+        .stDataFrame, .dataframe, .sismos-table, .css-1d391kg {{
+            color: #fff !important;
+            background-color: #232629 !important;
+        }}
+        .semaforo-card {{
+            background: #232629;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px #2229;
+            padding: 18px;
+            margin: 10px;
+            display: inline-block;
+            min-width: 230px;
+            max-width: 250px;
+            text-align: center;
+            color: #fff;
+            border: 2.5px solid {ORANGE};
+        }}
+        .semaforo-depto {{
+            color: #fff;
+            font-size: 1.12em;
+            font-weight: bold;
+        }}
+    </style>
+""", unsafe_allow_html=True)
+
+# --- ENCABEZADO ---
+c1, c2, c3 = st.columns([1, 6, 1])
+with c1:
+    st.image(LOGO_PC, width=70)
+with c2:
+    st.markdown(f"""
+      <h1 style='text-align:center;color:{ORANGE};font-size:22px;'>
+        PROTECCIÓN CIVIL Y ABORDAJE INTEGRAL DE EMERGENCIAS Y CATÁSTROFES<br>
+        DIRECCIÓN PROVINCIAL DE REDUCCIÓN DE RIESGOS DE DESASTRES
+      </h1>""", unsafe_allow_html=True)
+with c3:
+    st.image(LOGO_RRD, width=70)
+
+# --- BOTONES DE ACCESO RÁPIDO ---
+st.markdown(f"""
+<div style='text-align:center;margin:10px;'>
+    <a href='https://www.smn.gob.ar/alertas' target='_blank'
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🔔 Alertas SMN</a>
+    <a href='https://www.argentina.gob.ar/transporte/vialidad-nacional/estado-de-rutas' target='_blank'
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🛣️ Vialidad Nacional</a>
+    <a href='https://www.dpvsc.gov.ar/index.php/rutas-2/estado-de-rutas/' target='_blank'
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🛣️ Vialidad Provincial</a>
+    <a href='https://www.inpres.gob.ar/desktop/index.php' target='_blank'
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🌎 INPRES – Sismos</a>
+    <a href='https://www.csn.uchile.cl/' target='_blank'
+       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;margin:5px;'>🌎 CSN Chile</a>
+</div>
+""", unsafe_allow_html=True)
+
+# --- VISOR WINDY Y MAPAS ---
+st.markdown(f"### <span style='color:{ORANGE}'>🛰️ Clima (Windy)</span>", unsafe_allow_html=True)
+st.components.v1.iframe(
+    "https://embed.windy.com/embed2.html?lat=-49.5&lon=-70&detailLat=-49.5&detailLon=-70&width=650&height=450&zoom=5"
+    "&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates"
+    "&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarRange=-1",
+    height=460, scrolling=False
+)
+MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
+MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
+st.markdown(f"### <span style='color:{ORANGE}'>🗺️ Mapas de Santa Cruz</span>", unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+with col1:
+    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP1}&ehbc=2E312F", width=640, height=480)
+with col2:
+    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP2}&ehbc=2E312F", width=640, height=480)
 
 # --- FUNCIONES AUXILIARES ---
 def limpiar_texto_pdf(txt):
@@ -77,54 +164,6 @@ def get_clima(lat, lon):
             "wind": "-", "gust": "-", "deg": "-", "hum": "-", "pres": "-", "cloud": "-"
         }
 
-# --- ENCABEZADO ---
-c1, c2, c3 = st.columns([1, 6, 1])
-with c1:
-    st.image(LOGO_PC, width=70)
-with c2:
-    st.markdown("""
-      <h1 style='text-align:center;color:white;font-size:22px;'>
-        PROTECCIÓN CIVIL Y ABORDAJE INTEGRAL DE EMERGENCIAS Y CATÁSTROFES<br>
-        DIRECCIÓN PROVINCIAL DE REDUCCIÓN DE RIESGOS DE DESASTRES
-      </h1>""", unsafe_allow_html=True)
-with c3:
-    st.image(LOGO_RRD, width=70)
-
-# --- BOTONES DE ACCESO RÁPIDO ---
-st.markdown("""
-<div style='text-align:center;margin:10px;'>
-    <a href='https://www.smn.gob.ar/alertas' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;'>🔔 Ver alertas del SMN</a>
-    <a href='https://www.argentina.gob.ar/transporte/vialidad-nacional/estado-de-rutas' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🛣️ Partes Nacionales Vialidad</a>
-    <a href='https://www.dpvsc.gov.ar/index.php/rutas-2/estado-de-rutas/' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🛣️ Partes Provinciales Vialidad</a>
-    <a href='https://www.inpres.gob.ar/desktop/index.php' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🌎 INPRES – Sismos</a>
-    <a href='https://www.csn.uchile.cl/' target='_blank'
-       style='color:orange;background:black;border:2px solid orange;padding:10px 20px;border-radius:5px;text-decoration:none;font-weight:bold;margin-left:12px;'>🌎 CSN Chile – Sismos</a>
-</div>
-""", unsafe_allow_html=True)
-# --- VISOR WINDY ---
-st.markdown("### 🛰️ Clima (Windy)")
-st.components.v1.iframe(
-    "https://embed.windy.com/embed2.html?lat=-49.5&lon=-70&detailLat=-49.5&detailLon=-70&width=650&height=450&zoom=5"
-    "&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates"
-    "&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarRange=-1",
-    height=460, scrolling=False
-)
-
-# --- VISOR DE MAPAS PROPIOS ---
-MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
-MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
-
-st.markdown("### 🗺️ Mapas de Santa Cruz")
-col1, col2 = st.columns(2)
-with col1:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP1}&ehbc=2E312F", width=640, height=480)
-with col2:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP2}&ehbc=2E312F", width=640, height=480)
-
 # --- CARGA DE LOCALIDADES ---
 try:
     df = pd.read_excel(DATA_FILE, engine="openpyxl")
@@ -133,7 +172,7 @@ except Exception as e:
     st.stop()
 
 # --- CLIMA POR LOCALIDAD ---
-st.markdown("### 🌡️ Clima actual por localidad")
+st.markdown(f"### <span style='color:{ORANGE}'>🌡️ Clima actual por localidad</span>", unsafe_allow_html=True)
 cols = st.columns(2)
 datos = []
 for i, row in df.iterrows():
@@ -142,18 +181,18 @@ for i, row in df.iterrows():
     datos.append(c)
     with cols[i%2]:
         st.markdown(f"""
-        <div style='background:rgba(0,0,0,0.6);padding:12px;border-radius:8px;margin-bottom:8px;'>
-          <h4 style='color:#58a6ff;'>{c['loc']}</h4>
+        <div style='background:rgba(0,0,0,0.7);padding:14px;border-radius:9px;margin-bottom:10px;'>
+          <h4 style='color:{ORANGE};'>{c['loc']}</h4>
           <img src='{c['icon']}' width=40>
-          <p>{c['desc']}</p>
-          <p>Temp: {c['temp']}°C | Sens: {c['feel']}°C</p>
-          <p>Viento: {c['wind']} km/h | Ráfagas: {c['gust']} km/h</p>
-          <p>Dirección: {c['deg']}° ({dir_cardinal(c['deg'])})</p>
-          <p>Humedad: {c['hum']}% | Presión: {c['pres']} hPa | Nubosidad: {c['cloud']}%</p>
+          <p style='color:#fff'>{c['desc']}</p>
+          <p style='color:#fff'>Temp: {c['temp']}°C | Sens: {c['feel']}°C</p>
+          <p style='color:#fff'>Viento: {c['wind']} km/h | Ráfagas: {c['gust']} km/h</p>
+          <p style='color:#fff'>Dirección: {c['deg']}° ({dir_cardinal(c['deg'])})</p>
+          <p style='color:#fff'>Humedad: {c['hum']}% | Presión: {c['pres']} hPa | Nubosidad: {c['cloud']}%</p>
         </div>""", unsafe_allow_html=True)
 
 # --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
-st.markdown("### 📝 Parte diario del clima (todas las localidades)")
+st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
 df_parte = pd.DataFrame(datos)
 columnas = [
     ("loc", "Localidad"),
@@ -172,7 +211,7 @@ try:
     df_parte_viz.columns = [c[1] for c in columnas]
     df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
         lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
-    st.dataframe(df_parte_viz, use_container_width=True)
+    st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
 except Exception as e:
     st.error(f"ERROR al mostrar tabla: {e}")
 
@@ -189,21 +228,25 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
     pdf = FPDF(orientation='L', unit='mm', format='A4')
     pdf.add_page()
     try:
-        pdf.image(logo_izq, 12, 10, 24)
+        pdf.image(logo_izq, 30, 10, 24)  # Movido más a la derecha
         pdf.image(logo_der, 265, 10, 24)
     except Exception:
         pass
     pdf.set_xy(0, 20)
     pdf.set_font("Arial", 'B', 16)
+    pdf.set_text_color(255, 165, 0)
     pdf.cell(0, 18, "CLIMA ACTUAL POR LOCALIDAD - PROTECCION CIVIL", 0, 1, "C")
+    pdf.set_text_color(0,0,0)
     pdf.set_font("Arial", '', 11)
     pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
     pdf.ln(2)
 
     pdf.set_font("Arial", 'B', 10)
     def tabla_header():
+        pdf.set_text_color(255, 165, 0)
         for ix, col in enumerate(df.columns):
             pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
+        pdf.set_text_color(0,0,0)
         pdf.ln()
 
     tabla_header()
@@ -224,6 +267,7 @@ def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RR
         pdf.ln()
     pdf.ln(2)
     pdf.set_font("Arial", 'I', 9)
+    pdf.set_text_color(255, 255, 255)
     pdf.multi_cell(0, 8, limpiar_texto_pdf(
         "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
     ), 0, 'C')
@@ -240,7 +284,7 @@ if st.button("Generar parte diario PDF"):
     )
 
 # --- PRONÓSTICO EXTENDIDO POR LOCALIDAD (VISUAL Y PDF) ---
-st.markdown("### 📅 Pronóstico extendido 5 días por localidad")
+st.markdown(f"### <span style='color:{ORANGE}'>📅 Pronóstico extendido 5 días por localidad</span>", unsafe_allow_html=True)
 
 df_locs = pd.read_excel(DATA_FILE, engine="openpyxl")
 localidades = df_locs["localidad"].sort_values().tolist()
@@ -281,10 +325,7 @@ for item in data["list"]:
     pronostico_diario[fecha]["Dir_viento"].append(item["wind"]["deg"])
     pronostico_diario[fecha]["Precip"].append(item.get("pop", 0)*100)
 
-def cardinal(d):
-    dirs = ['N','NE','E','SE','S','SO','O','NO']
-    ix = int(((d + 22.5)%360)//45) % 8
-    return dirs[ix]
+def icon_url(code): return f"http://openweathermap.org/img/wn/{code}@2x.png"
 
 dias = []
 iconos = []
@@ -310,47 +351,46 @@ for fecha, v in list(pronostico_diario.items())[:5]:
     dirs.append(f"{dir_cardinal(dir_prom)}")
     precips.append(f"{round(max(v['Precip']))}%")
 
-def icon_url(code): return f"http://openweathermap.org/img/wn/{code}@2x.png"
-st.markdown(f"#### <center>{localidad_sel}, Santa Cruz</center>", unsafe_allow_html=True)
+st.markdown(f"#### <center style='color:{ORANGE}'>{localidad_sel}, Santa Cruz</center>", unsafe_allow_html=True)
 
 col1, col2 = st.columns([2,8])
 with col1:
     st.write("")
-
 with col2:
     html_txt = "<table style='width:100%;text-align:center'><tr><th></th>"
     for d in dias:
-        html_txt += f"<th style='font-size:17px'>{d}</th>"
-    html_txt += "</tr><tr><td><b>Estado</b></td>"
+        html_txt += f"<th style='color:{ORANGE};font-size:17px'>{d}</th>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Estado</b></td>"
     for i in range(5):
-        html_txt += f"<td><img src='{icon_url(iconos[i])}' width='48'><br>{descripciones[i]}</td>"
-    html_txt += "</tr><tr><td><b>Temp máx/mín (°C)</b></td>"
+        html_txt += f"<td style='color:#fff'><img src='{icon_url(iconos[i])}' width='48'><br>{descripciones[i]}</td>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Temp máx/mín (°C)</b></td>"
     for i in range(5):
-        html_txt += f"<td>{temp_maxs[i]}° / {temp_mins[i]}°</td>"
-    html_txt += "</tr><tr><td><b>Viento (km/h)</b></td>"
+        html_txt += f"<td style='color:#fff'>{temp_maxs[i]}° / {temp_mins[i]}°</td>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Viento (km/h)</b></td>"
     for i in range(5):
-        html_txt += f"<td>{vientos[i]}</td>"
-    html_txt += "</tr><tr><td><b>Ráfagas (km/h)</b></td>"
+        html_txt += f"<td style='color:#fff'>{vientos[i]}</td>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Ráfagas (km/h)</b></td>"
     for i in range(5):
-        html_txt += f"<td>{rafagas[i]}</td>"
-    html_txt += "</tr><tr><td><b>Dirección</b></td>"
+        html_txt += f"<td style='color:#fff'>{rafagas[i]}</td>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Dirección</b></td>"
     for i in range(5):
-        html_txt += f"<td>{dirs[i]}</td>"
-    html_txt += "</tr><tr><td><b>Prob. Precip (%)</b></td>"
+        html_txt += f"<td style='color:#fff'>{dirs[i]}</td>"
+    html_txt += "</tr><tr><td style='color:#fff'><b>Prob. Precip (%)</b></td>"
     for i in range(5):
-        html_txt += f"<td>{precips[i]}</td>"
+        html_txt += f"<td style='color:#fff'>{precips[i]}</td>"
     html_txt += "</tr></table>"
     st.markdown(html_txt, unsafe_allow_html=True)
 
-# --- PDF Pronóstico extendido ---
 class PronosticoPDF(FPDF):
     def header(self):
         try:
-            self.image(LOGO_PC, 10, 8, 18)
+            self.image(LOGO_PC, 40, 8, 18) # Escudo a la derecha
             self.image(LOGO_RRD, 180, 8, 18)
         except: pass
         self.set_font('Arial', 'B', 14)
+        self.set_text_color(255,165,0)
         self.cell(0, 10, limpiar_texto_pdf(f'Pronostico extendido 5 dias – {localidad_sel}, Santa Cruz'), 0, 1, 'C')
+        self.set_text_color(0,0,0)
         self.set_font('Arial', '', 11)
         self.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc_str} / Local {now_local_str})"), 0, 1, "C")
         self.ln(3)
@@ -360,13 +400,11 @@ class PronosticoPDF(FPDF):
         self.cell(0, 8, limpiar_texto_pdf("Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"), 0, 0, 'C')
 
 if st.button("Descargar pronóstico 5 días en PDF"):
-    # Asegura que cada lista tenga 5 elementos siempre
     def completar(lst, relleno="-"):
         lst = list(lst)
         while len(lst) < 5:
             lst.append(relleno)
         return lst[:5]
-
     dias_corr = completar(dias, "-")
     descripciones_corr = completar(descripciones, "-")
     temp_maxs_corr = completar(temp_maxs, "-")
@@ -375,14 +413,15 @@ if st.button("Descargar pronóstico 5 días en PDF"):
     rafagas_corr = completar(rafagas, "-")
     dirs_corr = completar(dirs, "-")
     precips_corr = completar(precips, "-")
-
     try:
         pdf = PronosticoPDF('L', 'mm', 'A4')
         pdf.add_page()
         pdf.set_font('Arial', 'B', 10)
+        pdf.set_text_color(255, 165, 0)
         pdf.cell(45, 10, limpiar_texto_pdf(""), 1, 0, "C")
         for d in dias_corr:
             pdf.cell(40, 10, limpiar_texto_pdf(d), 1, 0, "C")
+        pdf.set_text_color(0,0,0)
         pdf.ln()
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, limpiar_texto_pdf("Estado"), 1)
@@ -419,9 +458,35 @@ if st.button("Descargar pronóstico 5 días en PDF"):
     except Exception as err:
         st.error(f"No se pudo generar el PDF. Error: {err}")
 
-# --- SISMOS GLOBALES (USGS) ---
-st.markdown("### 🌍 Últimos sismos globales (USGS)")
+# --- SEMÁFORO MULTICRITERIO POR DEPARTAMENTO ---
+st.markdown(f"### <span style='color:{ORANGE}'>🚦 Semáforo meteorológico por departamento</span>", unsafe_allow_html=True)
+deptos = [
+    "Guer Aike", "Corpen Aike", "Magallanes", "Deseado",
+    "Lago Buenos Aires", "Rio Chico", "Lago Argentino"
+]
+# Simulamos datos para cada departamento (usá tus propios criterios de riesgo reales)
+estado_deptos = {
+    "Guer Aike": "🟢 Normal",
+    "Corpen Aike": "🟡 Precaución",
+    "Magallanes": "🟢 Normal",
+    "Deseado": "🔴 Riesgo",
+    "Lago Buenos Aires": "🟢 Normal",
+    "Rio Chico": "🟡 Precaución",
+    "Lago Argentino": "🟢 Normal"
+}
+colA, colB = st.columns(2)
+for i, dep in enumerate(deptos):
+    card = f"""<div class="semaforo-card">
+        <div class="semaforo-card-title" style="color:{ORANGE};font-weight:bold;font-size:1.14em;">{dep}</div>
+        <div class="semaforo-depto">{estado_deptos.get(dep,"-")}</div>
+    </div>"""
+    if i < 4:
+        colA.markdown(card, unsafe_allow_html=True)
+    else:
+        colB.markdown(card, unsafe_allow_html=True)
 
+# --- SISMOS GLOBALES (USGS) ---
+st.markdown(f"### <span style='color:{ORANGE}'>🌍 Últimos sismos globales (USGS)</span>", unsafe_allow_html=True)
 try:
     r = requests.get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson", timeout=10)
     features = r.json()["features"][:10]
@@ -437,7 +502,7 @@ try:
         data.append([time_str, mag, place, depth, url])
     df_eq = pd.DataFrame(data, columns=["Fecha/hora UTC", "Magnitud", "Lugar", "Profundidad (km)", "Ver evento"])
     def make_clickable(val):
-        return f'<a href="{val}" target="_blank">🔗 Link</a>' if val.startswith("http") else "-"
+        return f'<a href="{val}" target="_blank" style="color:{ORANGE}">🔗 Link</a>' if val.startswith("http") else "-"
     df_eq["Ver evento"] = df_eq["Ver evento"].apply(make_clickable)
     st.write(df_eq.to_html(escape=False, index=False), unsafe_allow_html=True)
 except Exception as e:
