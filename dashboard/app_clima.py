@@ -166,24 +166,6 @@ def get_clima(lat, lon):
 
 # --- CARGA DE LOCALIDADES ---
 try:
-    df_parte_viz = df_parte[[c[0] for c in columnas]]
-    df_parte_viz.columns = [c[1] for c in columnas]
-    df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
-        lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
-    st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
-except Exception as e:
-    st.error(f"ERROR al mostrar tabla: {e}")
-if st.button("Generar parte diario PDF"):
-    pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    st.download_button(
-        label="Descargar parte diario PDF",
-        data=pdf_bytes,
-        file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
-        mime="application/pdf"
-    )
-
-try:
     df = pd.read_excel(DATA_FILE, engine="openpyxl")
 except Exception as e:
     st.error("❌ Error al cargar el archivo de localidades.")
@@ -230,64 +212,22 @@ try:
     df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
         lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
     st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
+    
+    # Botón PDF bien ubicado, sólo aparece si la tabla existe:
+    if st.button("Generar parte diario PDF"):
+        pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        st.download_button(
+            label="Descargar parte diario PDF",
+            data=pdf_bytes,
+            file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
+            mime="application/pdf"
+        )
 except Exception as e:
     st.error(f"ERROR al mostrar tabla: {e}")
 
-def generar_parte_pdf(df, now_local, now_utc, logo_izq=LOGO_PC, logo_der=LOGO_RRD):
-    cols_usar = [col for col in df.columns if col not in ["Presión (hPa)", "Nubosidad (%)"]]
-    df = df[cols_usar].copy()
-    if "Dirección (°)" in df.columns:
-        df["Dirección"] = df["Dirección (°)"].apply(lambda x: x)
-        df = df.drop("Dirección (°)", axis=1)
-    orden = ['Localidad', 'Descripción', 'Temp (°C)', 'Sensación (°C)', 'Viento (km/h)', 'Ráfagas (km/h)', 'Dirección', 'Humedad (%)']
-    df = df[[col for col in orden if col in df.columns]]
-    col_widths = [48, 48, 26, 30, 30, 30, 30, 24]
-
-    pdf = FPDF(orientation='L', unit='mm', format='A4')
-    def tabla_header():
-        pdf.set_text_color(255, 165, 0)
-        pdf.set_font("Arial", 'B', 10)
-        for ix, col in enumerate(df.columns):
-            pdf.cell(col_widths[ix], 8, limpiar_texto_pdf(str(col)), border=1, align='C')
-        pdf.ln()
-        pdf.set_text_color(0,0,0)
-
-    filas_por_pagina = 20
-    for idx, row in df.iterrows():
-        if idx % filas_por_pagina == 0:
-            pdf.add_page()
-            pdf.set_y(30)  # Encabezado más arriba
-            try:
-                pdf.image(logo_izq, 20, 10, 18)
-                pdf.image(logo_der, 250, 10, 18)
-            except Exception:
-                pass
-            pdf.set_font("Arial", 'B', 16)
-            pdf.set_text_color(255, 165, 0)
-            pdf.cell(0, 12, "CLIMA ACTUAL POR LOCALIDAD - PROTECCION CIVIL", 0, 1, "C")
-            pdf.set_text_color(0,0,0)
-            pdf.set_font("Arial", '', 11)
-            pdf.cell(0, 7, limpiar_texto_pdf(f"Generado automaticamente (UTC {now_utc} / Local {now_local})"), 0, 1, "C")
-            pdf.ln(2)
-            tabla_header()
-            pdf.set_font("Arial", '', 10)
-        for ix, col in enumerate(df.columns):
-            txt = str(row[col]) if row[col] is not None else ""
-            txt = limpiar_texto_pdf(txt)
-            if len(txt) > 20:
-                txt = txt[:17] + "..."
-            pdf.cell(col_widths[ix], 7, txt, border=1, align='C')
-        pdf.ln()
-    pdf.ln(2)
-    pdf.set_font("Arial", 'I', 9)
-    pdf.set_text_color(255, 255, 255)
-    pdf.multi_cell(0, 8, limpiar_texto_pdf(
-        "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
-    ), 0, 'C')
-    return pdf
-
-
 # --- PRONÓSTICO EXTENDIDO POR LOCALIDAD (VISUAL Y PDF) ---
+
 st.markdown(f"### <span style='color:{ORANGE}'>📅 Pronóstico extendido 5 días por localidad</span>", unsafe_allow_html=True)
 
 df_locs = pd.read_excel(DATA_FILE, engine="openpyxl")
