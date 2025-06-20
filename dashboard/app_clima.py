@@ -7,184 +7,33 @@ from fpdf import FPDF
 import pytz
 import numpy as np
 from io import BytesIO
-import streamlit as st
-import base64
 
-def set_bg_from_local(img_path):
-    with open(img_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read())
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url('data:image/jpg;base64,{encoded_string.decode()}');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-# Llamá a la función al principio del script
-
-set_bg_from_local("dashboard/assets/fondo/fondo_proteccion.jpg")
-
-# --- CONFIGURACIÓN ---
-API_KEY = "f003e87edb9944f319d5f706f0979fec"
+# --- CONFIGURACIÓN BÁSICA ---
+API_KEY = "..."  # ← tu key de OpenWeather
+ORANGE = "#ff9100"
 DATA_FILE = "dashboard/data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx"
+LOGO_PC = "dashboard/assets/escudo_pc.png"
+LOGO_RRD = "dashboard/assets/escudo_rrd.png"
 
-LOGO_PC = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/LogoPC.png"
-LOGO_RRD = "https://raw.githubusercontent.com/ricky45684/protec-civil-clima/main/dashboard/assets/logos/logo_rrd_pc.png"
-
-WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-
-ORANGE = "#FFA500"
-
-# --- HORA LOCAL Y UTC ---
-BA = pytz.timezone("America/Argentina/Buenos_Aires")
-now_utc = datetime.now(timezone.utc)
-now_ba = now_utc.astimezone(BA)
-now_utc_str = now_utc.strftime("%d/%m/%Y %H:%M:%S")
-now_local_str = now_ba.strftime("%d/%m/%Y %H:%M:%S")
-
-st.set_page_config(page_title="Protección Civil - Clima SC", layout="wide")
-
-st.markdown(
-    f"<p style='text-align:right;color:lightgray;'>Última actualización: {now_local_str} (UTC {now_utc_str})</p>",
-    unsafe_allow_html=True
-)
-
-# --- ESTILO CUSTOM ---
-st.markdown(f"""
-    <style>
-        html, body, [class*="st-"] {{
-            background-color: #141618;
-        }}
-        .orange-title, .orange-button {{
-            color: {ORANGE} !important;
-        }}
-        .stButton>button, .orange-button, .semaforo-card-title {{
-            background-color: {ORANGE} !important;
-            color: #fff !important;
-            font-weight: bold;
-        }}
-        .stDataFrame, .dataframe, .sismos-table, .css-1d391kg {{
-            color: #fff !important;
-            background-color: #232629 !important;
-        }}
-        .semaforo-card {{
-            background: #232629;
-            border-radius: 15px;
-            box-shadow: 0 2px 8px #2229;
-            padding: 18px;
-            margin: 10px;
-            display: inline-block;
-            min-width: 230px;
-            max-width: 250px;
-            text-align: center;
-            color: #fff;
-            border: 2.5px solid {ORANGE};
-        }}
-        .semaforo-depto {{
-            color: #fff;
-            font-size: 1.12em;
-            font-weight: bold;
-        }}
-    </style>
-""", unsafe_allow_html=True)
-
-# --- ENCABEZADO ---
-c1, c2, c3 = st.columns([1, 6, 1])
-with c1:
-    st.image(LOGO_PC, width=70)
-with c2:
-    st.markdown(f"""
-      <h1 style='text-align:center;color:{ORANGE};font-size:22px;'>
-        PROTECCIÓN CIVIL Y ABORDAJE INTEGRAL DE EMERGENCIAS Y CATÁSTROFES<br>
-        DIRECCIÓN PROVINCIAL DE REDUCCIÓN DE RIESGOS DE DESASTRES
-      </h1>""", unsafe_allow_html=True)
-with c3:
-    st.image(LOGO_RRD, width=70)
-
-# --- BOTONES DE ACCESO RÁPIDO ---
-st.markdown(f"""
-<div style='display:flex;flex-wrap:wrap;justify-content:center;margin:10px;gap:7px;'>
-    <a href='https://www.smn.gob.ar/alertas' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🔔 Alertas SMN</a>
-    <a href='https://www.argentina.gob.ar/transporte/vialidad-nacional/estado-de-rutas' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🛣️ Vialidad Nacional</a>
-    <a href='https://www.dpvsc.gov.ar/index.php/rutas-2/estado-de-rutas/' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🛣️ Vialidad Provincial</a>
-    <a href='https://www.inpres.gob.ar/desktop/index.php' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🌎 INPRES – Sismos</a>
-    <a href='https://www.csn.uchile.cl/' target='_blank'
-       style='color:{ORANGE};background:#191c21;border:2px solid {ORANGE};padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin:3px 0 3px 0;flex:1 1 220px;text-align:center;'>🌎 CSN Chile</a>
-</div>
-""", unsafe_allow_html=True)
-
-# --- VISOR WINDY Y MAPAS ---
-st.markdown(f"### <span style='color:{ORANGE}'>🛰️ Clima (Windy)</span>", unsafe_allow_html=True)
-st.components.v1.iframe(
-    "https://embed.windy.com/embed2.html?lat=-49.5&lon=-70&detailLat=-49.5&detailLon=-70&width=650&height=450&zoom=5"
-    "&level=surface&overlay=wind&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates"
-    "&detail=&metricWind=km/h&metricTemp=%C2%B0C&radarRange=-1",
-    height=460, scrolling=False
-)
-MAP1 = "1gxAel478mSuzOx3VrqXTJ4KTARtwG4k"
-MAP2 = "17xfwk9mz4F96f8xvPp3sbZ-5whfbntI"
-st.markdown(f"### <span style='color:{ORANGE}'>🗺️ Mapas de Santa Cruz</span>", unsafe_allow_html=True)
-col1, col2 = st.columns(2)
-with col1:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP1}&ehbc=2E312F", width=640, height=480)
-with col2:
-    st.components.v1.iframe(f"https://www.google.com/maps/d/embed?mid={MAP2}&ehbc=2E312F", width=640, height=480)
-
-# --- FUNCIONES AUXILIARES ---
 def limpiar_texto_pdf(txt):
-    txt = str(txt)
-    txt = (txt.replace('á', 'a').replace('é', 'e').replace('í', 'i')
-            .replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
-            .replace('Á', 'A').replace('É', 'E').replace('Í', 'I')
-            .replace('Ó', 'O').replace('Ú', 'U').replace('Ñ', 'N'))
-    txt = txt.replace('°', 'o')
-    txt = txt.replace('’','\'')
-    txt = txt.replace('\n', ' ').replace('\r', '')
-    txt = txt.encode("ascii", errors="ignore").decode()
+    # Elimina acentos, reemplaza caracteres especiales, para evitar errores de PDF
+    if not isinstance(txt, str):
+        txt = str(txt)
+    accents = "áéíóúÁÉÍÓÚñÑ"
+    replaces = "aeiouAEIOUnN"
+    for a, r in zip(accents, replaces):
+        txt = txt.replace(a, r)
+    txt = txt.replace("°", "o")
     return txt
 
-def dir_cardinal(deg):
-    if deg == "N/D" or deg == "-" or deg == "" or deg is None:
-        return "N/D"
-    dirs = ['N','NE','E','SE','S','SO','O','NO']
+def dir_cardinal(grados):
+    # Convierte grados en puntos cardinales
     try:
-        return dirs[int(((float(deg) + 22.5)%360)//45) % 8]
-    except:
-        return "N/D"
-
-def get_clima(lat, lon):
-    try:
-        r = requests.get(
-            f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}"
-            f"&appid={API_KEY}&units=metric&lang=es", timeout=6).json()
-        return {
-            "loc":  r.get("name", "N/D"),
-            "icon": f"http://openweathermap.org/img/wn/{r['weather'][0]['icon']}@2x.png",
-            "desc": r["weather"][0]["description"].capitalize(),
-            "temp": r["main"]["temp"],
-            "feel": round(r["main"]["feels_like"],1),
-            "wind": round(r["wind"]["speed"]*3.6,1),
-            "gust": round(r["wind"].get("gust",0)*3.6,1),
-            "deg":  r["wind"].get("deg","N/D"),
-            "hum":  r["main"]["humidity"],
-            "pres": r["main"]["pressure"],
-            "cloud":r["clouds"]["all"]
-        }
-    except Exception as e:
-        return {
-            "loc": "N/D", "icon": "", "desc": "Error", "temp": "-", "feel": "-",
-            "wind": "-", "gust": "-", "deg": "-", "hum": "-", "pres": "-", "cloud": "-"
-        }
+        grados = float(grados)
+    except: return "-"
+    dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"]
+    ix = int((grados+11.25)//22.5)%16
+    return dirs[ix]
 
 # --- CARGA DE LOCALIDADES ---
 try:
@@ -194,68 +43,46 @@ except Exception as e:
     st.stop()
 
 # --- CLIMA POR LOCALIDAD ---
-st.markdown(f"### <span style='color:{ORANGE}'>🌡️ Clima actual por localidad</span>", unsafe_allow_html=True)
-cols = st.columns(2)
+st.markdown(f"### <span style='color:{ORANGE}'>📍 Clima actual por localidad</span>", unsafe_allow_html=True)
+localidades = df["Localidad"].tolist()
 datos = []
-for i, row in df.iterrows():
-    c = get_clima(row["Latitud_DD"], row["Longitud_DD"])
-    c["loc"] = row["localidad"]
-    datos.append(c)
-    with cols[i%2]:
-        st.markdown(f"""
-        <div style='background:rgba(0,0,0,0.7);padding:14px;border-radius:9px;margin-bottom:10px;'>
-          <h4 style='color:{ORANGE};'>{c['loc']}</h4>
-          <img src='{c['icon']}' width=40>
-          <p style='color:#fff'>{c['desc']}</p>
-          <p style='color:#fff'>Temp: {c['temp']}°C | Sens: {c['feel']}°C</p>
-          <p style='color:#fff'>Viento: {c['wind']} km/h | Ráfagas: {c['gust']} km/h</p>
-          <p style='color:#fff'>Dirección: {c['deg']}° ({dir_cardinal(c['deg'])})</p>
-          <p style='color:#fff'>Humedad: {c['hum']}% | Presión: {c['pres']} hPa | Nubosidad: {c['cloud']}%</p>
-        </div>""", unsafe_allow_html=True)
-def generar_parte_pdf(df, now_local_str, now_utc_str):
-    pdf = FPDF(orientation='L', unit='mm', format='A4')
-    pdf.set_left_margin(12)
-    pdf.set_right_margin(12)
-    filas_por_pagina = 20
 
-    def encabezado():
-        pdf.set_font("Arial", 'B', 16)
-        pdf.set_text_color(255, 165, 0)
-        pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
-        pdf.set_font("Arial", '', 11)
-        pdf.set_text_color(0, 0, 0)
-        pdf.cell(0, 10, f"Generado automáticamente (UTC {now_utc_str} / Local {now_local_str})", 0, 1, 'C')
-        pdf.ln(4)
-        pdf.set_font("Arial", 'B', 10)
-        for col in df.columns:
-            pdf.cell(28, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
-        pdf.ln()
-        pdf.set_font("Arial", '', 10)
+now_utc = datetime.utcnow()
+now_local = datetime.now(pytz.timezone("America/Argentina/Buenos_Aires"))
+now_utc_str = now_utc.strftime("%d/%m/%Y %H:%M:%S")
+now_local_str = now_local.strftime("%d/%m/%Y %H:%M:%S")
 
-    for i, (_, row) in enumerate(df.iterrows()):
-        if i % filas_por_pagina == 0:
-            pdf.add_page()
-            encabezado()
-        for val in row:
-            nombre = limpiar_texto_pdf(str(val))
-            # Si es la columna de localidad y es muy larga, achica fuente
-            if df.columns.get_loc("Localidad") == row.index.get_loc(val) and len(nombre) > 20:
-                pdf.set_font("Arial", '', 8)
-                pdf.cell(28, 10, nombre, 1, 0, 'C')
-                pdf.set_font("Arial", '', 10)
-            else:
-                pdf.cell(28, 10, nombre, 1, 0, 'C')
-        pdf.ln()
-    pdf.ln(2)
-    pdf.set_font("Arial", 'I', 9)
-    pdf.multi_cell(0, 8, limpiar_texto_pdf(
-        "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
-    ), 0, 'C')
-    return pdf
+for idx, row in df.iterrows():
+    nombre = row["Localidad"]
+    lat, lon = row["Latitud"], row["Longitud"]
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric&lang=es"
+        resp = requests.get(url, timeout=8)
+        j = resp.json()
+        temp = j["main"].get("temp","-")
+        feel = j["main"].get("feels_like","-")
+        wind = j["wind"].get("speed","-")
+        gust = j["wind"].get("gust", "-")
+        deg = j["wind"].get("deg","-")
+        hum = j["main"].get("humidity","-")
+        desc = j["weather"][0].get("description","-").capitalize()
+        pres = j["main"].get("pressure","-")
+        cloud = j.get("clouds",{}).get("all","-")
+    except Exception:
+        temp = feel = wind = gust = deg = hum = pres = cloud = desc = "-"
+    datos.append({
+        "loc": nombre,
+        "desc": desc,
+        "temp": temp,
+        "feel": feel,
+        "wind": round(float(wind)*3.6,1) if wind!="-" else "-",
+        "gust": round(float(gust)*3.6,1) if gust!="-" else "-",
+        "deg": deg,
+        "hum": hum,
+        "pres": pres,
+        "cloud": cloud,
+    })
 
-# --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
-st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
-df_parte = pd.DataFrame(datos)
 columnas = [
     ("loc", "Localidad"),
     ("desc", "Descripción"),
@@ -265,9 +92,11 @@ columnas = [
     ("gust", "Ráfagas (km/h)"),
     ("deg", "Dirección (°)"),
     ("hum", "Humedad (%)"),
-    ("pres", "Presión (hPa)"),
-    ("cloud", "Nubosidad (%)"),
 ]
+
+# --- PARTE DIARIO DEL CLIMA (TABLA + PDF) ---
+st.markdown(f"### <span style='color:{ORANGE}'>📝 Parte diario del clima (todas las localidades)</span>", unsafe_allow_html=True)
+df_parte = pd.DataFrame(datos)
 try:
     df_parte_viz = df_parte[[c[0] for c in columnas]]
     df_parte_viz.columns = [c[1] for c in columnas]
@@ -275,16 +104,51 @@ try:
         lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
     st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
     
-    # Botón PDF bien ubicado, sólo aparece si la tabla existe:
+    # Botón PDF bien ubicado, solo aparece si la tabla existe:
     if st.button("Generar parte diario PDF"):
-        pdf = generar_parte_pdf(df_parte_viz, now_local_str, now_utc_str)
-        pdf_bytes = pdf.output(dest='S').encode('latin1')
-        st.download_button(
-            label="Descargar parte diario PDF",
-            data=pdf_bytes,
-            file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
-            mime="application/pdf"
-        )
+        try:
+            pdf = FPDF(orientation='L', unit='mm', format='A4')
+            pdf.set_left_margin(12)
+            pdf.set_right_margin(12)
+            filas_por_pagina = 20
+
+            def encabezado():
+                pdf.set_font("Arial", 'B', 16)
+                pdf.set_text_color(255, 165, 0)
+                pdf.cell(0, 10, "Clima Actual por Localidad - SC", 0, 1, 'C')
+                pdf.set_font("Arial", '', 11)
+                pdf.set_text_color(0, 0, 0)
+                pdf.cell(0, 10, f"Generado automáticamente (UTC {now_utc_str} / Local {now_local_str})", 0, 1, 'C')
+                pdf.ln(4)
+                pdf.set_font("Arial", 'B', 10)
+                for col in df_parte_viz.columns:
+                    pdf.cell(28, 10, limpiar_texto_pdf(str(col)), 1, 0, 'C')
+                pdf.ln()
+                pdf.set_font("Arial", '', 10)
+
+            for i, (_, row) in enumerate(df_parte_viz.iterrows()):
+                if i % filas_por_pagina == 0:
+                    pdf.add_page()
+                    encabezado()
+                for val in row:
+                    nombre = limpiar_texto_pdf(str(val if pd.notnull(val) else "-"))
+                    pdf.cell(28, 10, nombre, 1, 0, 'C')
+                pdf.ln()
+            pdf.ln(2)
+            pdf.set_font("Arial", 'I', 9)
+            pdf.multi_cell(0, 8, limpiar_texto_pdf(
+                "Generado automaticamente por la Direccion Provincial de Reduccion de Riesgos de Desastres"
+            ), 0, 'C')
+            pdf_bytes = pdf.output(dest='S').encode('latin1')
+            st.download_button(
+                label="Descargar parte diario PDF",
+                data=pdf_bytes,
+                file_name=f"Clima_SC_{datetime.now().strftime('%Y%m%d')}.pdf",
+                mime="application/pdf"
+            )
+        except Exception as err:
+            st.error(f"No se pudo generar el PDF. Error: {err}")
+
 except Exception as e:
     st.error(f"ERROR al mostrar tabla: {e}")
 
