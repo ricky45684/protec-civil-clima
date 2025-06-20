@@ -6,7 +6,7 @@ from datetime import datetime
 
 # --- CONFIGURACIÓN ---
 API_KEY      = "f003e87edb9944f319d5f706f0979fec"
-DATA_FILE    = "data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx"
+DATA_FILE    = "data/Localidades_SC_Dep.xlsx"
 LOGO_PC      = "assets/logos/LogoPC.png"
 LOGO_RRD     = "assets/logos/logo_rrd_pc.png"
 REPORTES_DIR = "reportes_clima"
