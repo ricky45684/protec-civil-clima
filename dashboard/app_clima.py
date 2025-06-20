@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from fpdf import FPDF
-from datetime import datetime, timezone
+from datetime import datetime
 
 # --- CONFIGURACIÓN ---
 API_KEY      = "f003e87edb9944f319d5f706f0979fec"
@@ -20,17 +20,17 @@ st.set_page_config(page_title="Protección Civil - Clima SC", layout="wide")
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
     pass
-    # st.image(LOGO_PC, width=70)  # Comentado hasta que se suba correctamente el logo
+    # st.image(LOGO_PC, width=70)  # Comentado temporalmente hasta que el logo esté cargado
 with col2:
     st.markdown("<h1 style='text-align: center;'>Clima Santa Cruz</h1>", unsafe_allow_html=True)
 with col3:
-    st.image(LOGO_RRD, width=70)
+    pass
+    # st.image(LOGO_RRD, width=70)  # Comentado temporalmente hasta que el logo esté cargado
 
 # --- FUNCIONES CLIMA ---
 @st.cache_data(show_spinner=False)
 def cargar_localidades():
-    df = pd.read_excel(DATA_FILE)
-    return df
+    return pd.read_excel(DATA_FILE)
 
 def obtener_clima(lat, lon):
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric&lang=es"
@@ -46,7 +46,7 @@ def export_pdf(df):
     pdf.cell(200, 10, txt="Parte Diario - Clima Santa Cruz", ln=True, align="C")
     pdf.ln(10)
 
-    for i, row in df.iterrows():
+    for _, row in df.iterrows():
         linea = f"{row['Localidad']}: {row['Descripción'].capitalize()}, {row['Temperatura']}°C, Viento {row['Viento']} km/h"
         pdf.cell(200, 10, txt=linea, ln=True)
 
@@ -68,7 +68,7 @@ for _, fila in df_localidades.iterrows():
             "Temperatura": data["main"]["temp"],
             "Sensación térmica": data["main"]["feels_like"],
             "Descripción": data["weather"][0]["description"],
-            "Viento": data["wind"]["speed"] * 3.6  # m/s a km/h
+            "Viento": round(data["wind"]["speed"] * 3.6, 1)  # m/s a km/h
         }
         datos_clima.append(clima)
 
