@@ -11,33 +11,41 @@ LOGO_PC      = "assets/logos/LogoPC.png"
 LOGO_RRD     = "assets/logos/logo_rrd_pc.png"
 REPORTES_DIR = "reportes_clima"
 
-WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- PÁGINA ---
 st.set_page_config(page_title="Protección Civil - Clima SC", layout="wide")
 
 # --- ENCABEZADO ---
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
     pass
-    # st.image(LOGO_PC, width=70)  # Comentado temporalmente hasta que el logo esté cargado
+    # st.image(LOGO_PC, width=70)
 with col2:
     st.markdown("<h1 style='text-align: center;'>Clima Santa Cruz</h1>", unsafe_allow_html=True)
 with col3:
     pass
-    # st.image(LOGO_RRD, width=70)  # Comentado temporalmente hasta que el logo esté cargado
+    # st.image(LOGO_RRD, width=70)
 
-# --- FUNCIONES CLIMA ---
+# --- FUNCIONES ---
 @st.cache_data(show_spinner=False)
 def cargar_localidades():
     return pd.read_excel(DATA_FILE)
 
 def obtener_clima(lat, lon):
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric&lang=es"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
+    r = requests.get(url)
+    if r.status_code == 200:
+        return r.json()
     return None
+
+def evaluar_riesgo(temp, sens_term, viento):
+    riesgo = []
+    if viento >= 80:
+        riesgo.append("viento fuerte")
+    if sens_term <= -10:
+        riesgo.append("frío extremo")
+    if temp >= 35 or temp <= -15:
+        riesgo.append("temperatura extrema")
+    return riesgo
 
 def export_pdf(df):
     pdf = FPDF()
@@ -47,36 +55,65 @@ def export_pdf(df):
     pdf.ln(10)
 
     for _, row in df.iterrows():
-        linea = f"{row['Localidad']}: {row['Descripción'].capitalize()}, {row['Temperatura']}°C, Viento {row['Viento']} km/h"
+        linea = f"{row['Localidad']} ({row['Departamento']}): {row['Descripción'].capitalize()}, {row['Temperatura']}°C, Viento {row['Viento']} km/h"
         pdf.cell(200, 10, txt=linea, ln=True)
 
     nombre_archivo = f"{REPORTES_DIR}/Clima_SC_{datetime.now():%Y%m%d}.pdf"
     pdf.output(nombre_archivo)
     return nombre_archivo
 
-# --- APP ---
+# --- CARGA Y PROCESAMIENTO ---
 st.markdown("### Clima actual por localidad")
 
 df_localidades = cargar_localidades()
-datos_clima = []
+datos = []
 
 for _, fila in df_localidades.iterrows():
-    data = obtener_clima(fila["Latitud"], fila["Longitud"])
+    data = obtener_clima(fila["Latitud_DD"], fila["Longitud_DD"])
     if data:
-        clima = {
-            "Localidad": fila["Localidad"],
-            "Temperatura": data["main"]["temp"],
-            "Sensación térmica": data["main"]["feels_like"],
-            "Descripción": data["weather"][0]["description"],
-            "Viento": round(data["wind"]["speed"] * 3.6, 1)  # m/s a km/h
-        }
-        datos_clima.append(clima)
+        temp     = data["main"]["temp"]
+        sens     = data["main"]["feels_like"]
+        viento_k = round(data["wind"]["speed"] * 3.6, 1)  # m/s a km/h
+        riesgo   = evaluar_riesgo(temp, sens, viento_k)
 
-df_resultado = pd.DataFrame(datos_clima)
-st.dataframe(df_resultado)
+        datos.append({
+            "Localidad": fila["localidad"],
+            "Departamento": fila["departamento"].title(),
+            "Temperatura": temp,
+            "Sensación térmica": sens,
+            "Viento": viento_k,
+            "Descripción": data["weather"][0]["description"],
+            "Riesgos": ", ".join(riesgo) if riesgo else "ninguno"
+        })
+
+df_clima = pd.DataFrame(datos)
+st.dataframe(df_clima)
+
+# --- SEMÁFORO POR DEPARTAMENTO ---
+st.markdown("### Semáforo climático por departamento")
+
+def determinar_nivel(riesgos):
+    if any("fuerte" in r for r in riesgos) or any("extrema" in r for r in riesgos):
+        return "🔴 Rojo"
+    elif any(r != "ninguno" for r in riesgos):
+        return "🟡 Amarillo"
+    else:
+        return "🟢 Verde"
+
+df_semaforo = (
+    df_clima.groupby("Departamento")
+    .agg({"Riesgos": lambda x: list(x)})
+    .reset_index()
+)
+
+df_semaforo["Nivel de riesgo"] = df_semaforo["Riesgos"].apply(determinar_nivel)
+df_semaforo["Variables activadas"] = df_semaforo["Riesgos"].apply(lambda x: ", ".join(set([i for i in x if i != "ninguno"])))
+
+df_semaforo_mostrar = df_semaforo[["Departamento", "Nivel de riesgo", "Variables activadas"]]
+st.dataframe(df_semaforo_mostrar)
 
 # --- EXPORTACIÓN A PDF ---
 if st.button("Exportar PDF del parte diario"):
-    archivo = export_pdf(df_resultado)
+    archivo = export_pdf(df_clima)
     with open(archivo, "rb") as f:
         st.download_button("Descargar parte diario", f, file_name=archivo.split("/")[-1])
