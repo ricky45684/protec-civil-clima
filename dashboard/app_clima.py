@@ -1,4 +1,4 @@
-import streamlit as st
+Devuelveimport streamlit as st
 import pandas as pd
 import requests
 import os
@@ -62,16 +62,21 @@ def dir_cardinal(grados):
 try:
     df = pd.read_excel(DATA_FILE, engine="openpyxl")
     df.columns = df.columns.str.strip()
-
+    # Detecta la columna "Localidad" sin importar mayúsculas/minúsculas
+    col_localidad = [c for c in df.columns if c.strip().lower() == "localidad"]
+    if not col_localidad:
+        st.error("❌ Error: No se encontró la columna 'Localidad' en el Excel.")
+        st.write("Columnas detectadas:", list(df.columns))
+        st.stop()
+    col_localidad = col_localidad[0]
 except Exception as e:
     st.error("❌ Error al cargar el archivo de localidades.")
     st.stop()
 
 # --- CLIMA POR LOCALIDAD ---
 st.markdown(f"### <span style='color:{ORANGE}'>📍 Clima actual por localidad</span>", unsafe_allow_html=True)
-localidades = df["Localidad"].tolist()
+localidades = df[col_localidad].tolist()
 datos = []
-
 now_utc = datetime.utcnow()
 now_local = datetime.now(pytz.timezone("America/Argentina/Buenos_Aires"))
 now_utc_str = now_utc.strftime("%d/%m/%Y %H:%M:%S")
