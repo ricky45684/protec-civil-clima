@@ -61,6 +61,8 @@ def dir_cardinal(grados):
 # --- CARGA DE LOCALIDADES ---
 try:
     df = pd.read_excel(DATA_FILE, engine="openpyxl")
+    df.columns = df.columns.str.strip()
+
 except Exception as e:
     st.error("❌ Error al cargar el archivo de localidades.")
     st.stop()
