@@ -7,6 +7,18 @@ from fpdf import FPDF
 import pytz
 import numpy as np
 from io import BytesIO
+import unicodedata
+
+def normalize(s):
+    """Devuelve el string en minúsculas, sin tildes ni espacios extras."""
+    if not isinstance(s, str):
+        return ""
+    s = s.strip().lower()
+    s = ''.join(
+        c for c in unicodedata.normalize('NFD', s)
+        if unicodedata.category(c) != 'Mn'
+    )
+    return s
 
 # --- CONFIGURACIÓN BÁSICA ---
 API_KEY = "..."  # ← tu key de OpenWeather
@@ -14,6 +26,17 @@ ORANGE = "#ff9100"
 DATA_FILE = "dashboard/data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx"
 LOGO_PC = "dashboard/assets/escudo_pc.png"
 LOGO_RRD = "dashboard/assets/escudo_rrd.png"
+
+st.markdown("""
+<div style='text-align:center; margin-bottom:12px;'>
+    <a href="https://www.agvp.gob.ar/PartesDiarios/PartesProvinciales.pdf" target="_blank" style="color:orange; background:black; border:2px solid orange; padding:10px 24px; margin:5px 10px; border-radius:12px; text-decoration:none; font-weight:bold; display:inline-block;">
+        📄 Parte Provincial (PDF)
+    </a>
+    <a href="https://www.agvp.gob.ar/PartesDiarios/PartesNacionales.pdf" target="_blank" style="color:orange; background:black; border:2px solid orange; padding:10px 24px; margin:5px 10px; border-radius:12px; text-decoration:none; font-weight:bold; display:inline-block;">
+        🛣️ Parte Nacional (PDF)
+    </a>
+</div>
+""", unsafe_allow_html=True)
 
 def limpiar_texto_pdf(txt):
     # Elimina acentos, reemplaza caracteres especiales, para evitar errores de PDF
@@ -103,7 +126,7 @@ try:
     df_parte_viz["Dirección (°)"] = df_parte["deg"].apply(
         lambda x: f"{dir_cardinal(x)}" if x != "-" else "-")
     st.dataframe(df_parte_viz.style.set_properties(**{'color':'#fff','background-color':'#232629'}), use_container_width=True)
-    
+
     # Botón PDF bien ubicado, solo aparece si la tabla existe:
     if st.button("Generar parte diario PDF"):
         try:
@@ -157,11 +180,14 @@ except Exception as e:
 st.markdown(f"### <span style='color:{ORANGE}'>📅 Pronóstico extendido 5 días por localidad</span>", unsafe_allow_html=True)
 
 df_locs = pd.read_excel(DATA_FILE, engine="openpyxl")
+df_locs["localidad_norm"] = df_locs["localidad"].apply(normalize)
 localidades = df_locs["localidad"].sort_values().tolist()
 localidad_sel = st.selectbox("Seleccioná una localidad", localidades)
 
-lat_sel = float(df_locs[df_locs["localidad"] == localidad_sel]["Latitud_DD"])
-lon_sel = float(df_locs[df_locs["localidad"] == localidad_sel]["Longitud_DD"])
+# Usar normalize para buscar la localidad seleccionada
+mask = df_locs["localidad_norm"] == normalize(localidad_sel)
+lat_sel = float(df_locs.loc[mask, "Latitud_DD"])
+lon_sel = float(df_locs.loc[mask, "Longitud_DD"])
 
 with st.spinner("Buscando pronóstico..."):
     api_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat_sel}&lon={lon_sel}&appid={API_KEY}&units=metric&lang=es"
