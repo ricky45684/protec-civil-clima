@@ -1,19 +1,18 @@
 import streamlit as st
 import pandas as pd
 import requests
-import os
 import base64
 from fpdf import FPDF
 from datetime import datetime, timezone
+import os
 
 # --- CONFIGURACIÓN ---
 API_KEY      = "f003e87edb9944f319d5f706f0979fec"
-BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE    = os.path.join(BASE_DIR, "..", "data", "Localidades_Santa_Cruz_Coordenadas_DD.xlsx")
-LOGO_PC      = os.path.join(BASE_DIR, "..", "assets", "logos", "LogoPC.png")
-LOGO_RRD     = os.path.join(BASE_DIR, "..", "assets", "logos", "logo_rrd_pc.png")
-FONDO        = os.path.join(BASE_DIR, "..", "assets", "fondo", "fondo_proteccion.jpg")
-REPORTES_DIR = os.path.join(BASE_DIR, "..", "reportes_clima")
+DATA_FILE    = "data/Localidades_Santa_Cruz_Coordenadas_DD.xlsx"
+LOGO_PC      = "assets/logos/LogoPC.png"
+LOGO_RRD     = "assets/logos/logo_rrd_pc.png"
+FONDO        = "assets/fondo/fondo_proteccion.jpg"
+REPORTES_DIR = "reportes_clima"
 os.makedirs(REPORTES_DIR, exist_ok=True)
 
 # IDs de tus Google My Maps
@@ -252,8 +251,8 @@ def export_pdf(data, path=None):
         pdf.cell(0,6,f"Humedad:{d['hum']}% Presión:{d['pres']} hPa Nubos:{d['cloud']}%",0,1)
         pdf.ln(3)
     if not path:
-        path = os.path.join(BASE_DIR, f"Clima_SC_{datetime.now():%Y%m%d}.pdf")
-    pdf.output(path); return path
+       path = f"reportes_clima/Clima_SC_{datetime.now():%Y%m%d}.pdf"
+
 
 hoy = datetime.now().strftime("%Y%m%d")
 ruta = os.path.join(REPORTES_DIR, f"Clima_SC_{hoy}.pdf")
